@@ -75,8 +75,8 @@ func (client *Client) Timing(key string, time int64, sampleRate float32) {
 }
 
 // Count tack
-func (client *Client) Count(key string, delta int, sampleRate float32) {
-	metricValue := fmt.Sprintf("%d|%s", delta, metricTypeCount)
+func (client *Client) Count(key string, value int, sampleRate float32) {
+	metricValue := fmt.Sprintf("%d|%s", value, metricTypeCount)
 	if sampleRate < 1 {
 		if client.isSendAcceptedBySampleRate(sampleRate) {
 			metricValue = fmt.Sprintf("%s|@%f", metricValue, sampleRate)
