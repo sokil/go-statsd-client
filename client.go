@@ -12,7 +12,7 @@ import (
 
 const metricTypeCount = "c"
 const metricTypeGauge = "g"
-const metricTypeTiming = "t"
+const metricTypeTiming = "ms"
 const metricTypeSet = "s"
 
 // The Client type
