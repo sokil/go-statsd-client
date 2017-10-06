@@ -65,7 +65,7 @@ func (client *Client) Timing(key string, time int64, sampleRate float32) {
 	metricValue := fmt.Sprintf("%d|%s", time, metricTypeTiming)
 	if sampleRate < 1 {
 		if client.isSendAcceptedBySampleRate(sampleRate) {
-			metricValue = fmt.Sprintf("%s|@%f", metricValue, sampleRate)
+			metricValue = fmt.Sprintf("%s|@%g", metricValue, sampleRate)
 		} else {
 			return
 		}
@@ -79,7 +79,7 @@ func (client *Client) Count(key string, value int, sampleRate float32) {
 	metricValue := fmt.Sprintf("%d|%s", value, metricTypeCount)
 	if sampleRate < 1 {
 		if client.isSendAcceptedBySampleRate(sampleRate) {
-			metricValue = fmt.Sprintf("%s|@%f", metricValue, sampleRate)
+			metricValue = fmt.Sprintf("%s|@%g", metricValue, sampleRate)
 		} else {
 			return
 		}
