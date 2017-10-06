@@ -133,7 +133,7 @@ func TestClient_isSendAcceptedBySampleRate(t *testing.T) {
 	}
 
 	if client.isSendAcceptedBySampleRate(0.99999999) == false {
-		t.Errorf("0.99999999 must not be accepred by sample rate")
+		t.Errorf("0.99999999 must be accepred by sample rate")
 	}
 }
 
