@@ -10,7 +10,7 @@ Client for StatsD (Golang)
 
 ```go
 client := NewClient("127.0.0.1", 9876)  # create client
-client.SetAutoflush(true)               # if true send metric on each set
+client.SetAutoflush(true)               # if true send metric on each set. By default false
 client.Open()                           # open connection to StatsD
 client.Count('a.b.c', 42, 0.7)          # set count metric. If autoflush enabled, then send to statsd
 ```
