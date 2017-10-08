@@ -90,6 +90,20 @@ func TestClient_Gauge(t *testing.T) {
 	}
 }
 
+func TestClient_GaugeShift(t *testing.T) {
+	client := NewClient("127.0.0.1", 9876)
+
+	client.GaugeShift("a.b.c", 320)
+	if client.keyBuffer["a.b.c"] != "+320|g" {
+		t.Errorf("Wrong gauge metric: \"%s\"", client.keyBuffer["a.b.c"])
+	}
+
+	client.GaugeShift("a.b.c",-320)
+	if client.keyBuffer["a.b.c"] != "-320|g" {
+		t.Errorf("Wrong gauge metric: \"%s\"", client.keyBuffer["a.b.c"])
+	}
+}
+
 func TestClient_Set(t *testing.T) {
 	client := NewClient("127.0.0.1", 9876)
 	client.Set("a.b.c", 320)
