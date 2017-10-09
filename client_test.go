@@ -3,7 +3,20 @@ package statsd
 import (
 	"reflect"
 	"testing"
+	"net"
+	"strings"
 )
+
+var udpConnectionStubIO chan []byte = make(chan []byte)
+type udpConnectionStub struct {
+	net.Conn
+}
+func (stub *udpConnectionStub) Write(p []byte) (n int, err error) {
+	udpConnectionStubIO <- p
+	n = 0
+	err = nil
+	return
+}
 
 func TestClient_NewClient(t *testing.T) {
 	client := NewClient("127.0.0.1", 9876)
@@ -98,7 +111,7 @@ func TestClient_GaugeShift(t *testing.T) {
 		t.Errorf("Wrong gauge metric: \"%s\"", client.keyBuffer["a.b.c"])
 	}
 
-	client.GaugeShift("a.b.c",-320)
+	client.GaugeShift("a.b.c", -320)
 	if client.keyBuffer["a.b.c"] != "-320|g" {
 		t.Errorf("Wrong gauge metric: \"%s\"", client.keyBuffer["a.b.c"])
 	}
@@ -148,6 +161,38 @@ func TestClient_isSendAcceptedBySampleRate(t *testing.T) {
 
 	if client.isSendAcceptedBySampleRate(0.99999999) == false {
 		t.Errorf("0.99999999 must be accepred by sample rate")
+	}
+}
+
+func TestClient_Flush(t *testing.T) {
+	client := NewClient("127.0.0.1", 9876)
+
+	client.conn = new(udpConnectionStub)
+
+	client.Count("a.a", 42, 1)
+	client.Timing("a.b", 43, 1)
+	client.Gauge("a.c", 44)
+	client.GaugeShift("a.d", 45)
+	client.GaugeShift("a.e", 46)
+	client.Set("a.f", 47)
+	client.Flush()
+
+	metricPacketBytes := <- udpConnectionStubIO
+	actualMetricPacket := strings.Replace(
+		string(metricPacketBytes),
+		"\n",
+		"@",
+		-1,
+	)
+
+	expectedMetricPacket := "a.f:47|s@a.a:42|c@a.b:43|ms@a.c:44|g@a.d:+45|g@a.e:+46|g"
+
+	if expectedMetricPacket != actualMetricPacket {
+		t.Errorf(
+			"Wrong metric packet send: %s, expected: %s",
+			actualMetricPacket,
+			expectedMetricPacket,
+		)
 	}
 }
 
