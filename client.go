@@ -19,21 +19,32 @@ const metricTypeSet = "s"
 type Client struct {
 	host          string
 	port          int
-	conn          net.Conn          // UDP connection to StatsD server
-	rand          *rand.Rand        // rand generator to skip messages by sample rate
-	keyBuffer     map[string]string // array of messages to send
-	keyBufferLock sync.RWMutex      // mutex to lock buffer of keys
-	autoflush     bool              // send metrics on every call
+	conn          net.Conn     // UDP connection to StatsD server
+	rand          *rand.Rand   // rand generator to skip messages by sample rate
+	keyBuffer     []string     // array of messages to send
+	keyBufferLock sync.RWMutex // mutex to lock buffer of keys
+	buffered      bool         // send metrics on every call
 }
 
-// NewClient creates new StatsD client
+// NewClient creates new StatsD client with disabled buffer.
 func NewClient(host string, port int) *Client {
 	client := Client{
 		host:      host,
 		port:      port,
 		rand:      rand.New(rand.NewSource(time.Now().Unix())),
-		keyBuffer: make(map[string]string),
-		autoflush: false,
+		keyBuffer: nil,
+	}
+	return &client
+}
+
+// NewBufferedClient creates new StatsD client with enabled buffer.
+// Manual call of Flush() required to send metrics to StatsD server.
+func NewBufferedClient(host string, port int) *Client {
+	client := Client{
+		host:      host,
+		port:      port,
+		rand:      rand.New(rand.NewSource(time.Now().Unix())),
+		keyBuffer: make([]string, 0),
 	}
 	return &client
 }
@@ -51,13 +62,6 @@ func (client *Client) Open() {
 // Close UDP connection to statsd server
 func (client *Client) Close() {
 	client.conn.Close()
-}
-
-// SetAutoflush enables/disables buffered mode
-// In buffered mode requires manual call of Flush()
-// In autoflush mode message sends to server on every call
-func (client *Client) SetAutoflush(autoflush bool) {
-	client.autoflush = autoflush
 }
 
 // Timing track in milliseconds with sampling
@@ -109,16 +113,18 @@ func (client *Client) Set(key string, value int) {
 
 // add to buffer and flush if auto flush enabled
 func (client *Client) addToBuffer(key string, metricValue string) {
+	// build metric
+	metric := fmt.Sprintf("%s:%s", key, metricValue)
+
 	// flush
-	if client.autoflush {
+	if client.keyBuffer == nil {
 		// send metric now
-		go client.send(fmt.Sprintf("%s:%s", key, metricValue))
+		go client.send(metric)
 	} else {
 		// add metric to buffer for next manual flush
 		client.keyBufferLock.Lock()
-		client.keyBuffer[key] = metricValue
+		client.keyBuffer = append(client.keyBuffer, metric)
 		client.keyBufferLock.Unlock()
-
 	}
 }
 
@@ -131,27 +137,21 @@ func (client *Client) isSendAcceptedBySampleRate(sampleRate float32) bool {
 	return randomNumber <= sampleRate
 }
 
-// Flush buffer to statsd daemon by UDP
+// Flush buffer to statsd daemon by UDP when buffer disabled
 func (client *Client) Flush() {
-	// check if buffer has metrics
-	if len(client.keyBuffer) == 0 {
+	// check if buffer enabled and has metrics
+	if client.keyBuffer == nil || len(client.keyBuffer) == 0 {
 		return
 	}
-
-	// prepare metric packet
-	var metricPacketArray []string
 
 	// lock
 	client.keyBufferLock.Lock()
 
 	// build packet
-	for key, metricValue := range client.keyBuffer {
-		metricPacketArray = append(metricPacketArray, fmt.Sprintf("%s:%s", key, metricValue))
-	}
-	metricPacket := strings.Join(metricPacketArray, "\n")
+	metricPacket := strings.Join(client.keyBuffer, "\n")
 
 	// clear key buffer
-	client.keyBuffer = make(map[string]string)
+	client.keyBuffer = make([]string, 0)
 
 	// lock
 	client.keyBufferLock.Unlock()
