@@ -206,13 +206,22 @@ func TestBufferedClient_Flush(t *testing.T) {
 
 	client.conn = new(udpConnectionStub)
 
+	err := client.Flush()
+	if err != nil {
+		t.Errorf("Flush fails with error: %s", err)
+	}
+
 	client.Count("a.a", 42, 1)
 	client.Timing("a.b", 43, 1)
 	client.Gauge("a.c", 44)
 	client.GaugeShift("a.d", 45)
 	client.GaugeShift("a.e", 46)
 	client.Set("a.f", 47)
-	client.Flush()
+
+	err = client.Flush()
+	if err != nil {
+		t.Errorf("Flush fails with error: %s", err)
+	}
 
 	metricPacketBytes := <- udpConnectionStubIO
 	actualMetricPacket := strings.Replace(
@@ -230,6 +239,19 @@ func TestBufferedClient_Flush(t *testing.T) {
 			actualMetricPacket,
 			expectedMetricPacket,
 		)
+	}
+}
+
+func TestClient_Flush(t *testing.T) {
+	client := NewClient("127.0.0.1", 9876)
+	err := client.Flush()
+
+	if err == nil {
+		t.Errorf("Flush in unbuffered mode must return error")
+	}
+
+	if (err.Error() != "Invalid call of flush in unbuffered mode") {
+		t.Errorf("Invalid error on flush in unbuffered mode")
 	}
 }
 

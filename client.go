@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"errors"
 )
 
 const metricTypeCount = "c"
@@ -139,10 +140,15 @@ func (client *Client) isSendAcceptedBySampleRate(sampleRate float32) bool {
 }
 
 // Flush buffer to statsd daemon by UDP when buffer disabled
-func (client *Client) Flush() {
-	// check if buffer enabled and has metrics
-	if client.keyBuffer == nil || len(client.keyBuffer) == 0 {
-		return
+func (client *Client) Flush() (error) {
+	// check if buffer enabled
+	if client.keyBuffer == nil {
+		return errors.New("Invalid call of flush in unbuffered mode")
+	}
+
+	// check if buffer has metrics
+	if len(client.keyBuffer) == 0 {
+		return nil
 	}
 
 	// lock
@@ -159,6 +165,8 @@ func (client *Client) Flush() {
 
 	// send packet
 	go client.send(metricPacket)
+
+	return nil
 }
 
 // Send StatsD packet
