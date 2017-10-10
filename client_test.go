@@ -48,6 +48,35 @@ func TestNewBufferedClient(t *testing.T) {
 	}
 }
 
+func TestOpen(t *testing.T) {
+	client := NewBufferedClient("127.0.0.1", 9876)
+
+	if client.conn != nil {
+		t.Errorf("Connection must be nill")
+	}
+
+	client.Open()
+
+	if _, ok := client.conn.(net.Conn); !ok {
+		t.Errorf("Connection must be instanc e of net.Conn")
+	}
+}
+
+func TestClose(t *testing.T) {
+	client := NewBufferedClient("127.0.0.1", 9876)
+
+	if client.conn != nil {
+		t.Errorf("Connection must be nill")
+	}
+
+	client.Open()
+	client.Close()
+
+	if client.conn != nil {
+		t.Errorf("Connection must be closed")
+	}
+}
+
 func TestBufferedClient_Timing_BigRate(t *testing.T) {
 	client := NewBufferedClient("127.0.0.1", 9876)
 	client.Timing("a.b.c", 320, 0.9999)
@@ -197,10 +226,39 @@ func TestBufferedClient_Flush(t *testing.T) {
 
 	if expectedMetricPacket != actualMetricPacket {
 		t.Errorf(
-			"Wrong metric packet send: %s, expected: %s",
+			"Wrong metric packet send by buffered client: %s, expected: %s",
 			actualMetricPacket,
 			expectedMetricPacket,
 		)
 	}
 }
 
+func TestClient_Send(t *testing.T) {
+	client := NewClient("127.0.0.1", 9876)
+
+	client.conn = new(udpConnectionStub)
+
+	// count
+	client.Count("a.a", 42, 1)
+	actualCountMetricPacketBytes := <- udpConnectionStubIO
+	expectedCountMetricPacket := "a.a:42|c"
+	if expectedCountMetricPacket != string(actualCountMetricPacketBytes) {
+		t.Errorf(
+			"Wrong count metric packet send by unbuffered client: %s, expected: %s",
+			string(actualCountMetricPacketBytes),
+			expectedCountMetricPacket,
+		)
+	}
+
+	// timing
+	client.Timing("a.b", 43, 1)
+	actualTimingMetricPacketBytes := <- udpConnectionStubIO
+	expectedTimingMetricPacket := "a.b:43|ms"
+	if expectedTimingMetricPacket != string(actualTimingMetricPacketBytes) {
+		t.Errorf(
+			"Wrong timing metric packet send by unbuffered client: %s, expected: %s",
+			string(actualTimingMetricPacketBytes),
+			expectedTimingMetricPacket,
+		)
+	}
+}

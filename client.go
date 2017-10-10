@@ -62,6 +62,7 @@ func (client *Client) Open() {
 // Close UDP connection to statsd server
 func (client *Client) Close() {
 	client.conn.Close()
+	client.conn = nil
 }
 
 // Timing track in milliseconds with sampling
