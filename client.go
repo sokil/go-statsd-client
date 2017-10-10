@@ -100,8 +100,7 @@ func (client *Client) Gauge(key string, value int) {
 	client.addToBuffer(key, metricValue)
 }
 
-// Gauge shift
-// Negative value will decrease previously set value, positive - increase.
+// GaugeShift decrease previously set value if negative value passed, and increase if positive.
 func (client *Client) GaugeShift(key string, value int) {
 	metricValue := fmt.Sprintf("%+d|%s", value, metricTypeGauge)
 	client.addToBuffer(key, metricValue)
