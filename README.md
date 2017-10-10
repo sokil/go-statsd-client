@@ -26,9 +26,9 @@ client.Count('a.b.c', 42, 0.7)          # set count metric and send it to StatsD
 Creating buffered client:
 
 ```go
-client := NewClient("127.0.0.1", 9876)  # create client
+client := NewBufferedClient("127.0.0.1", 9876)  # create client
 client.Open()                           # open connection to StatsD
 client.Count('a.b.c', 42, 0.7)          # set count metric and add it to buffer
-client.Count('a.b.d', 43)               # set timing metric and add it to buffer
+client.Timing('a.b.d', 43)               # set timing metric and add it to buffer
 client.Flush()							# send all metrics as one packet to StatsD
 ```
