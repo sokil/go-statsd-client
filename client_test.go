@@ -1,16 +1,18 @@
 package statsd
 
 import (
-	"reflect"
-	"testing"
 	"net"
+	"reflect"
 	"strings"
+	"testing"
 )
 
 var udpConnectionStubIO chan []byte = make(chan []byte)
+
 type udpConnectionStub struct {
 	net.Conn
 }
+
 func (stub *udpConnectionStub) Write(p []byte) (n int, err error) {
 	udpConnectionStubIO <- p
 	n = 0
@@ -223,7 +225,7 @@ func TestBufferedClient_Flush(t *testing.T) {
 		t.Errorf("Flush fails with error: %s", err)
 	}
 
-	metricPacketBytes := <- udpConnectionStubIO
+	metricPacketBytes := <-udpConnectionStubIO
 	actualMetricPacket := strings.Replace(
 		string(metricPacketBytes),
 		"\n",
@@ -250,7 +252,7 @@ func TestClient_Flush(t *testing.T) {
 		t.Errorf("Flush in unbuffered mode must return error")
 	}
 
-	if (err.Error() != "Invalid call of flush in unbuffered mode") {
+	if err.Error() != "Invalid call of flush in unbuffered mode" {
 		t.Errorf("Invalid error on flush in unbuffered mode")
 	}
 }
@@ -262,7 +264,7 @@ func TestClient_Send(t *testing.T) {
 
 	// count
 	client.Count("a.a", 42, 1)
-	actualCountMetricPacketBytes := <- udpConnectionStubIO
+	actualCountMetricPacketBytes := <-udpConnectionStubIO
 	expectedCountMetricPacket := "a.a:42|c"
 	if expectedCountMetricPacket != string(actualCountMetricPacketBytes) {
 		t.Errorf(
@@ -274,7 +276,7 @@ func TestClient_Send(t *testing.T) {
 
 	// timing
 	client.Timing("a.b", 43, 1)
-	actualTimingMetricPacketBytes := <- udpConnectionStubIO
+	actualTimingMetricPacketBytes := <-udpConnectionStubIO
 	expectedTimingMetricPacket := "a.b:43|ms"
 	if expectedTimingMetricPacket != string(actualTimingMetricPacketBytes) {
 		t.Errorf(

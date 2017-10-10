@@ -1,6 +1,7 @@
 package statsd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -8,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"errors"
 )
 
 const metricTypeCount = "c"
@@ -140,7 +140,7 @@ func (client *Client) isSendAcceptedBySampleRate(sampleRate float32) bool {
 }
 
 // Flush buffer to statsd daemon by UDP when buffer disabled
-func (client *Client) Flush() (error) {
+func (client *Client) Flush() error {
 	// check if buffer enabled
 	if client.keyBuffer == nil {
 		return errors.New("Invalid call of flush in unbuffered mode")
