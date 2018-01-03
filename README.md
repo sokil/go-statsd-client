@@ -6,7 +6,7 @@ Client for StatsD (Golang)
 [![GoDoc](https://godoc.org/github.com/sokil/go-statsd-client?status.svg)](https://godoc.org/github.com/sokil/go-statsd-client)
 [![Build Status](https://travis-ci.org/sokil/go-statsd-client.svg?branch=master)](https://travis-ci.org/sokil/go-statsd-client)
 
-## Useage
+## Usage
 
 Client may be in buffered and unbuffered mode.
 
