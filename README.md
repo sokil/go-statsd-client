@@ -33,3 +33,7 @@ client.Count('a.b.c', 42, 0.7)                 # set count metric and add it to 
 client.Timing('a.b.d', 43)                     # set timing metric and add it to buffer
 client.Flush()                                 # send all metrics as one packet to StatsD
 ```
+
+## See also
+
+* [HTTP proxy to StatsD with REST interface for using in browsers](https://github.com/sokil/statsd-http-proxy)
